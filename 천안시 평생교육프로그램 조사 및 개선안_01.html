@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" name="viewport" />
+	<title>천안시 평생교육프로그램 개선안</title>
+<style>
+		:root {
+			/* --- 1. 색상 테마 변경 (딥 그린 & 민트) --- */
+			--bg-page: #F4F6F5;      
+			--bg-slide: #FFFFFF;     
+			--surface-card: #FFFFFF; 
+			--surface-blue: #E8EFEA; /* 연한 민트 (배경용) */
+			--surface-green: #D2E2D9;/* 중간 민트 (강조 배경용) */
+			--surface-prompt: #F2F6F4;
+			
+			--text-primary: #1A3C2B; /* 아주 짙은 딥 그린 (기본 글씨) */
+			--text-secondary: #4A5D54;/* 짙은 회녹색 (본문 글씨) */
+			--text-muted: #8A9D93;
+			
+			--border-default: #C2D1C9;
+			--border-subtle: #E0E8E4;
+			
+			--accent-navy: #1F4E3D;  /* 메인 딥 그린 (제목, 강조, 번호) */
+			--accent-blue: #64967E;  /* 서브 민트 그린 (배지, 아이콘) */
+
+			/* --- 2. 둥근 모서리 제거 (각진 디자인) --- */
+			--radius-slide: 0px;
+			--radius-card: 0px;
+
+			/* 기본 레이아웃 변수 (유지) */
+			--slide-w: 1600px;
+			--slide-h: 900px;
+			--pad-x: 72px;
+			--pad-y: 54px;
+			--header-h: 108px;
+			--gap: 24px;
+			--content-scale: 1.00;
+			--fit-scale: 1;
+			--nav-height: 64px;
+			--deck-shift-y: 0px;
+			--font-body: Noto Sans KR, Apple SD Gothic Neo, system-ui, sans-serif;
+			--font-mono: JetBrains Mono, SFMono-Regular, Consolas, monospace;
+		}
+
+		* { box-sizing: border-box; }
+		html, body {
+			width: 100%; height: 100%; margin: 0;
+			font-family: var(--font-body);
+			background: var(--bg-page); color: var(--text-primary);
+			overflow: hidden;
+		}
+		body { min-height: 100vh; min-height: 100svh; min-height: 100dvh; }
+		button, input { font-family: inherit; }
+
+		.viewport {
+			position: fixed; inset: 0; width: 100vw; height: 100vh;
+			overflow: hidden; background: var(--bg-page);
+		}
+
+		.deck {
+			position: absolute; left: 50%; top: 50%;
+			width: var(--slide-w); height: var(--slide-h);
+			transform: translate(-50%, calc(-50% - var(--deck-shift-y))) scale(var(--fit-scale));
+			transform-origin: center center; will-change: transform;
+		}
+
+		.slide {
+			position: relative; width: var(--slide-w); height: var(--slide-h);
+			background-color: var(--bg-slide);
+			/* --- 3. 배경 도트(점) 패턴 추가 --- */
+			background-image: radial-gradient(#E0E5E2 2px, transparent 2px);
+			background-size: 20px 20px;
+			border: 1px solid var(--border-default);
+			border-radius: var(--radius-slide); padding: var(--pad-y) var(--pad-x);
+			display: none; flex-direction: column; overflow: hidden;
+			box-shadow: 0 10px 30px rgba(31, 78, 61, 0.08);
+		}
+		.slide.active { display: flex; }
+
+		.slide-header {
+			height: var(--header-h); display: grid;
+			grid-template-columns: 64px 1fr minmax(520px, 980px);
+			align-items: center; gap: 22px; flex: 0 0 var(--header-h);
+		}
+
+		.number-chip {
+			width: 58px; height: 42px; border: 2px solid var(--accent-navy);
+			border-radius: var(--radius-card); display: grid; place-items: center;
+			font: 800 calc(15px * var(--content-scale)) / 1.2 var(--font-mono);
+			letter-spacing: 0.08em; color: var(--accent-navy); background: #FFFFFF;
+		}
+		
+		/* --- 4. 첨부 이미지 스타일의 언더라인 바 적용 --- */
+		.header-rule { 
+			height: 8px; 
+			background: linear-gradient(to right, var(--accent-navy) 0%, var(--accent-navy) 20%, var(--border-subtle) 20%, var(--border-subtle) 100%); 
+		}
+
+		.slide-title {
+			margin: 0; font-size: calc(44px * var(--content-scale));
+			font-weight: 900; line-height: 1.16; letter-spacing: -0.035em;
+			text-align: right; word-break: keep-all; color: var(--accent-navy);
+		}
+		.slide-lead {
+			margin: 0 0 22px; font-size: calc(24px * var(--content-scale));
+			font-weight: 600; line-height: 1.42; color: var(--text-secondary);
+			word-break: keep-all;
+		}
+
+		.slide-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+		h3 {
+			margin: 0 0 10px; font-size: calc(24px * var(--content-scale));
+			font-weight: 800; line-height: 1.28; word-break: keep-all; color: var(--accent-navy);
+		}
+		p, li {
+			margin: 0; font-size: calc(21px * var(--content-scale));
+			font-weight: 500; line-height: 1.55; color: var(--text-secondary);
+			word-break: keep-all;
+		}
+		ul { margin: 14px 0 0; padding-left: 1.18em; }
+
+		.badge, .box-label {
+			font: 800 calc(14px * var(--content-scale)) / 1.2 var(--font-mono);
+			letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-blue);
+			display: inline-block; margin-bottom: 8px;
+		}
+
+		.card, .accent-card, .step-card, .workflow-step, .numbered-item {
+			background: var(--surface-card); border: 1px solid var(--border-subtle);
+			border-radius: var(--radius-card); padding: calc(28px * var(--content-scale));
+			box-shadow: 4px 4px 0px rgba(31, 78, 61, 0.05); min-height: 0; overflow: hidden;
+		}
+		.accent-card { background: var(--surface-blue); border-color: var(--border-default); }
+
+		.takeaway {
+			margin-top: 18px; padding: 18px 24px; border-radius: 0px;
+			background: var(--surface-green); border: 1px solid var(--accent-blue);
+			font-size: calc(24px * var(--content-scale)); font-weight: 700;
+			line-height: 1.42; color: var(--accent-navy); word-break: keep-all;
+			text-align: center;
+		}
+
+		/* Cover Slide */
+		.cover-slide { padding: 76px 84px; }
+		.cover-hero {
+			display: grid; grid-template-rows: auto auto 1fr; align-content: center;
+			justify-items: center; text-align: center; height: 100%; transform: translateY(0px);
+		}
+		.cover-title {
+			margin: 24px 0 18px; font-size: 74px; font-weight: 900; line-height: 1.15;
+			letter-spacing: -0.05em; max-width: 1200px; word-break: keep-all; color: var(--accent-navy);
+		}
+		.cover-subtitle {
+			margin: 0; font-size: 30px; line-height: 1.45; color: var(--text-secondary);
+			max-width: 1160px; word-break: keep-all; text-align: center; font-weight: 600;
+		}
+		.keyword-row {
+			display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px;
+			width: min(1320px, 100%); align-self: center; margin-top: 52px;
+		}
+		.keyword-card { text-align: left; border-top: 4px solid var(--accent-navy); }
+		.keyword-card p { font-size: calc(18px * var(--content-scale)); line-height: 1.5; }
+		
+		.class-label {
+			position: absolute; right: 50px; bottom: -20px;
+			font-size: 18px; font-weight: 800; color: var(--text-secondary);
+			letter-spacing: 0.05em; text-align: right; line-height: 1.6;
+		}
+
+		/* Layouts */
+		.grid-2, .card-grid, .numbered-grid { flex: 1; min-height: 0; }
+		.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+		.card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap); }
+		.numbered-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 18px; }
+
+		.numbered-item {
+			display: grid; grid-template-columns: 52px 1fr; gap: 12px;
+			padding: 18px; border-left: 4px solid var(--accent-blue);
+		}
+		.numbered-item h3 { font-size: calc(23px * var(--content-scale)); margin-bottom: 6px; }
+		.numbered-item p { font-size: calc(20px * var(--content-scale)); line-height: 1.45; }
+		.step-num {
+			width: 52px; height: 52px; border-radius: 0px; background: var(--accent-navy);
+			color: #FFFFFF; display: grid; place-items: center;
+			font: 800 calc(18px * var(--content-scale)) / 1 var(--font-mono); flex: 0 0 auto;
+		}
+
+		.workflow-row {
+			display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; flex: 1; min-height: 0;
+		}
+		.workflow-step {
+			display: flex; flex-direction: column; gap: 8px; padding: calc(24px * var(--content-scale));
+			border-top: 4px solid var(--accent-navy);
+		}
+		.workflow-step h3 { font-size: calc(24px * var(--content-scale)); }
+		.workflow-step p { font-size: calc(20px * var(--content-scale)); line-height: 1.45; }
+		.output-chip {
+			margin-top: auto; padding: 8px 10px; border-radius: 0px;
+			background: var(--surface-green); border: 1px solid var(--accent-blue);
+			font-size: calc(14px * var(--content-scale)); font-weight: 800; color: var(--accent-navy); display: inline-block; text-align: center;
+		}
+
+		.hero-panel {
+			background: var(--surface-card); border: 1px solid var(--accent-blue);
+			border-radius: 0px; padding: calc(48px * var(--content-scale)); display: grid; gap: 24px;
+			flex: 1; align-content: center; box-shadow: inset 0 0 0 4px var(--surface-blue);
+		}
+		.hero-panel p { font-size: calc(26px * var(--content-scale)); line-height: 1.62; color: var(--text-primary); font-weight: 600;}
+
+		/* Navigation */
+		.nav-btn, .nav-input {
+			border: 1px solid var(--border-default); border-radius: 4px; background: #FFFFFF;
+			color: var(--text-primary); font-weight: 800; font-size: 13px; padding: 10px 14px; cursor: pointer;
+		}
+		.slide-nav {
+			position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+			display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
+			max-width: calc(100vw - 24px); padding: 10px 12px; border: 1px solid var(--border-default);
+			border-radius: 8px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 10px 32px rgba(31, 78, 61, 0.12);
+			z-index: 20;
+		}
+		.nav-input { width: 68px; text-align: center; padding: 10px; }
+		.page-indicator { font: 800 14px / 1 var(--font-mono); color: var(--text-secondary); padding: 0 4px; }
+		
+		.slide:not(.cover-slide)::before {
+			content: attr(data-part); position: absolute; top: 24px; right: var(--pad-x);
+			max-width: 760px; font-size: calc(16px * var(--content-scale)); font-weight: 800; line-height: 1.2;
+			letter-spacing: 0.04em; color: var(--accent-blue); text-align: right; white-space: nowrap; z-index: 2;
+		}
+
+		/* Print/PDF adjustments */
+		@media print {
+			@page { size: 16.6667in 9.375in; margin: 0; }
+			* { -webkit-print-color-adjust: exact; print-color-adjust: exact; text-shadow: none !important; box-shadow: none !important; filter: none !important; }
+			html, body { width: 16.6667in; height: auto; margin: 0; background: #FFFFFF !important; overflow: visible !important; }
+			.viewport { position: static !important; display: block !important; width: auto !important; height: auto !important; padding: 0 !important; background: #FFFFFF !important; overflow: visible !important; }
+			.deck { position: static !important; display: block !important; width: 16.6667in !important; height: auto !important; transform: none !important; background: #FFFFFF !important; overflow: visible !important; }
+			.slide, .slide.active { display: flex !important; width: 16.6667in !important; height: 9.375in !important; margin: 0 !important; border: none !important; border-radius: 0 !important; background: #FFFFFF !important; break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid; overflow: hidden !important; }
+			.slide-nav { display: none !important; }
+			.card, .accent-card, .workflow-step, .numbered-item, .takeaway, .hero-panel { border-color: var(--border-default) !important; box-shadow: none !important; }
+		}
+	</style>
+</head>
+<body>
+	<div class="viewport">
+		<div class="deck" id="deck">
+
+			<!-- SLIDE 001 | Cover -->
+			<section class="slide active cover-slide" data-part="도입" id="slide-001">
+				<main class="cover-hero">
+					<div class="badge">디지털 리터러시 역량 강화 연구</div>
+					<div>
+						<h1 class="cover-title">천안시 평생교육프로그램 조사 및<br>맞춤형 개선안</h1>
+						<p class="cover-subtitle">기능 습득형 교육에서 AI 기반 자기주도 디지털 학습으로의 전환</p>
+					</div>
+					<div class="keyword-row">
+						<div class="card keyword-card"><span class="badge">Target Audience</span>
+							<h3>50~64세 중장년층</h3>
+							<p>재취업, 건강관리, 금융생활, 가족 소통 등 생애주기 과제를 수행해야 하는 세대를 집중 분석합니다.</p>
+						</div>
+						<div class="card keyword-card"><span class="badge">Core Direction</span>
+							<h3>AI 맞춤형 학습 도우미</h3>
+							<p>AI를 신기한 체험 도구로만 쓰는 것에 그치지 않고, 모르는 것을 스스로 묻고 학습하는 도구로 활용합니다.</p>
+						</div>
+						<div class="card keyword-card"><span class="badge">Curriculum</span>
+							<h3>16주 단계형 커리큘럼</h3>
+							<p>단발성 교육을 넘어, 기초 기기 조작부터 정보 검증 능력까지 유기적으로 이어지는 학습 경로를 제안합니다.</p>
+						</div>
+						<div class="card keyword-card"><span class="badge">Study Area</span>
+							<h3>천안시 평생학습 사례</h3>
+							<p>평생학습도시로 2회 연속 지정되며 안정적인 운영 체계를 갖춘 천안시의 실제 프로그램을 기반으로 분석합니다.</p>
+						</div>
+					</div>
+					<div class="class-label">
+    신문방송학과 전현재<br>
+    창의인재개발학과 김오현<br>
+    문헌정보학과 이성호
+</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 002 | Need for Study -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅰ. 서론" id="slide-002">
+				<header class="slide-header">
+					<div class="number-chip">002</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">연구의 필요성: AI 시대 평생교육의 새로운 과제</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">디지털 기술이 일상 전반에 깊숙이 들어온 현재, 강사가 지식을 일방적으로 전달하는 방식은 한계에 다다랐습니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">BACKGROUND</span>
+							<h3>디지털 기기 생활환경의 심화</h3>
+							<p>오늘날 스마트폰, 무인 주문기(키오스크), 모바일 금융, 공공서비스 앱 등 디지털 기기 사용을 전제로 한 생활환경이 폭발적으로 늘어나고 있습니다. 이러한 변화 속에서 디지털 활용 능력은 개인의 단순한 생활 편의를 넘어 사회참여의 기회를 결정짓는 밀접한 요소가 되었습니다.</p>
+						</div>
+						<div class="accent-card"><span class="badge">GENERATIVE AI</span>
+							<h3>생성형 AI 도구의 결합</h3>
+							<p>최근에는 ChatGPT와 같은 생성형 AI 도구가 검색, 글쓰기, 정보 정리 등 다양한 일상 활동을 지원하고 있습니다. 기존 평생교육이 강사의 화면을 그대로 따라 누르는 기능 습득형이었다면, 이제는 학습자가 필요한 정보를 스스로 AI에게 질문하고 문제를 해결하는 '자기주도적 학습 능력'을 기르는 방향으로 확장되어야 합니다.</p>
+						</div>
+					</div>
+					<div class="takeaway">본 연구는 AI 시대를 맞아 단순히 스마트폰 기능을 외우는 교육에서 벗어나, 학습자 스스로 배우고 성장할 수 있는 개선안을 도출합니다.</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 003 | Region Selection -->
+			<section class="slide" data-layout="numbered_checklist" data-part="Ⅱ. 지역 및 대상 선정" id="slide-003">
+				<header class="slide-header">
+					<div class="number-chip">003</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">조사 지역 선정: 왜 천안시를 분석하는가?</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">천안시는 단발성 교육이 아닌 장기적이고 체계적인 평생학습 체계를 갖추어 본 연구를 진행하기에 최적의 지역입니다.</p>
+					<div class="numbered-grid">
+						<div class="numbered-item"><span class="step-num">01</span>
+							<div>
+								<h3>우수한 평생학습 인프라 구축</h3>
+								<p>천안시는 평생학습관과 읍면동 평생학습센터를 통해 시민을 대상으로 매우 다양한 프로그램을 운영하고 있으며, 평생학습포털을 통한 통합 지원 체계를 명확히 갖추고 있습니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">02</span>
+							<div>
+								<h3>평생학습도시 2회 연속 재지정</h3>
+								<p>2007년 최초 지정 이후, 2024년 교육부 주관 평생학습도시 평가에서 2회 연속 재지정되었습니다. 이는 단기 사업이 아닌 안정적이고 지속적인 운영 기반을 증명합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">03</span>
+							<div>
+								<h3>실질적인 디지털 교육 운영 현황</h3>
+								<p>스마트폰, 카카오톡, 네이버 검색 등 기초 교육부터 대중교통 앱, 키오스크 실습까지 시민들의 실제 생활에 밀착된 구체적인 교육이 현장에서 활발히 진행 중입니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">04</span>
+							<div>
+								<h3>AI 특화 교육의 선제적 도입</h3>
+								<p>기초 디지털 교육뿐만 아니라, 읍면동 센터를 중심으로 ChatGPT 가입, 프롬프트 작성, AI 기반 이미지 및 영상 생성 등 AI 활용 평생교육 기반을 이미 갖추고 있습니다.</p>
+							</div>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 004 | Target Audience -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅱ. 지역 및 대상 선정" id="slide-004">
+				<header class="slide-header">
+					<div class="number-chip">004</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">핵심 대상 선정: 50~64세 중장년층</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">디지털 전환에 가장 큰 영향을 받으면서도, 실질적인 삶의 과제를 해결해야 하는 50~64세에 주목합니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">VULNERABILITY</span>
+							<h3>디지털 활용 경험의 부족</h3>
+							<p>청년층에 비해 디지털 기기와 AI 도구를 성장 과정에서 자연스럽게 접할 기회가 적었습니다. 단순한 기기 보유를 넘어, 온라인 서비스나 무인화 기기를 능숙하게 활용하고 정보를 효과적으로 검색하는 실질적인 '디지털 정보 격차'를 겪고 있는 주요 연령대입니다.</p>
+						</div>
+						<div class="accent-card"><span class="badge">LIFE CYCLE TASKS</span>
+							<h3>복합적인 생애주기적 과제 직면</h3>
+							<p>이 연령대는 단순히 은퇴를 기다리는 세대가 아닙니다. 경제활동 유지, 새로운 직무로의 재취업, 병원 예약 등 본인 및 가족의 건강관리, 모바일 뱅킹을 통한 금융생활, 지역사회 참여 등 매우 다양하고 필수적인 생활 과제를 디지털 환경 속에서 수행해내야만 합니다.</p>
+						</div>
+					</div>
+					<div class="takeaway">중장년층을 위한 교육은 단순 기능 설명에 그쳐선 안 되며, 변화 속에서 계속 학습할 수 있는 능력을 길러야 합니다.</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 005 | Program Analysis 1 -->
+			<section class="slide" data-layout="four_card_grid" data-part="Ⅲ. 기존 프로그램 분석" id="slide-005">
+				<header class="slide-header">
+					<div class="number-chip">005</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">기존 프로그램 분석 1: 기초 및 심화 과정</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">천안시 두정평생학습관에서 운영 중인 기초 및 심화 과정은 생활밀착형 실습을 중심으로 구성되어 있습니다.</p>
+					<div class="card-grid">
+						<div class="card">
+							<span class="badge">BASIC COURSE</span>
+							<h3>스마트폰키오스크 기본1</h3>
+							<p>스마트폰의 구조를 이해하는 것에서 출발하여 문자, 연락처, 카메라 등 필수 기능을 배웁니다. 특히 패스트푸드, 영화예매, 병원예약, 카카오택시, KTX 예매 등 무인화 환경에 대응하기 위해 FNJ 앱을 통한 실전 키오스크 모의 실습을 상세히 다룹니다.</p>
+						</div>
+						<div class="card">
+							<span class="badge">ADVANCED COURSE</span>
+							<h3>스마트폰키오스크 심화1</h3>
+							<p>기본 과정을 넘어 네이버 지도, 대중교통 앱, 이메일, 사진·영상 편집 등 생활 활용 범위를 대폭 넓힙니다. 후반부에는 번역기 사용법, 보이스피싱 예방법, 그리고 ChatGPT와 Gemini의 기초적인 이해가 포함되어 생활과 디지털 안전을 포괄합니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 006 | Program Analysis 2 -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅲ. 기존 프로그램 분석" id="slide-006">
+				<header class="slide-header">
+					<div class="number-chip">006</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">기존 프로그램 분석 2: AI 특화 과정 및 종합 장점</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">최신 AI 기술을 반영한 특화 프로그램이 운영되고 있으며, 전반적으로 중장년층에 적합한 실용적 장점을 가집니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">AI COURSE</span>
+							<h3>북면 스마트폰과 AI 활용</h3>
+							<p>북면 다목적복지회관에서 진행되는 이 프로그램은 ChatGPT 가입부터 시작해 프롬프트(좋은 질문) 만들기, AI 기반 건강정보 검색, 긴 글 요약, 번역, 이미지 생성 및 동영상 제작 등 생성형 AI를 실생활에 접목하려는 선제적이고 흥미로운 시도를 보여줍니다.</p>
+						</div>
+						<div class="accent-card"><span class="badge">KEY STRENGTHS</span>
+							<h3>기존 프로그램들의 주요 장점</h3>
+							<ul>
+								<li>대중교통, 병원 등 일상 불편을 곧바로 해소하는 <strong>생활밀착형 구성</strong></li>
+								<li>단순 설명이 아닌 직접 기기를 조작해보는 <strong>강의·실습 병행 방식</strong></li>
+								<li>기초부터 최신 AI 트렌드까지 수용하는 <strong>넓은 교육 스펙트럼</strong></li>
+								<li>모바일 스미싱 및 보이스피싱 예방 등 <strong>디지털 안전교육 포함</strong></li>
+							</ul>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 007 | Limitations -->
+			<section class="slide" data-layout="four_card_grid" data-part="Ⅲ. 기존 프로그램 분석" id="slide-007">
+				<header class="slide-header">
+					<div class="number-chip">007</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">기존 프로그램의 명확한 한계점</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">각 프로그램은 개별적으로 훌륭하나, 유기적인 연결과 AI 리터러시의 깊이 측면에서 보완이 필요합니다.</p>
+					<div class="card-grid">
+						<div class="card">
+							<h3>1. 분절된 강좌 구조</h3>
+							<p>기본, 심화, AI 강좌가 각각 존재하지만 학습자의 성장 단계에 맞춰 자연스럽게 이어지는 하나의 통합된 '단계형 학습 경로'로 안내되지 않고 파편화되어 있습니다.</p>
+						</div>
+						<div class="card">
+							<h3>2. 일회성 AI 체험의 한계</h3>
+							<p>AI 교육이 신기한 그림을 그리거나 음악을 만드는 단편적 체험에 머물 우려가 큽니다. 일상 문제를 지속적으로 해결하는 학습 도구로서의 접근이 부족합니다.</p>
+						</div>
+						<div class="card">
+							<h3>3. 정보 판별 및 검증 교육 부족</h3>
+							<p>AI가 제공한 건강/금융 정보의 출처를 확인하거나, 생성형 AI가 만든 가짜뉴스를 판별하는 등 'AI 시대의 필수 리터러시 및 비판적 사고' 교육이 미흡합니다.</p>
+						</div>
+						<div class="card">
+							<h3>4. 생애주기 맞춤 실습의 부재</h3>
+							<p>기기 기능 위주로 구성되어 있어, 중장년층의 실제 고민인 재취업용 이력서 작성, 구체적인 건강/금융 정보 활용 등 생애 과제와의 직접적인 결합이 다소 약합니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 008 | Core Improvement -->
+			<section class="slide" data-layout="hero_text" data-part="Ⅳ. 핵심 개선 방향" id="slide-008">
+				<header class="slide-header">
+					<div class="number-chip">008</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">핵심 개선 방향: 패러다임의 전환</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">기존의 "기능 습득형 교육"에서 벗어나 "AI 기반 자기주도 디지털 학습 교육"으로 전면 전환합니다.</p>
+					<div class="hero-panel">
+						<p>지금까지의 평생교육이 스마트폰 앱 아이콘의 위치를 달달 외우고 키보드 치는 법을 칠판에 적어주는 방식이었다면, 앞으로의 교육은 학습자 스스로가 모르는 것을 만났을 때 <strong>"카카오톡에서 사진 보내는 법을 단계별로 쉽게 알려줘"</strong>라고 AI에게 질문하고 그 답을 보며 스스로 문제를 해결해 나가는 능력을 길러주어야 합니다.</p>
+						<p>AI를 단순한 콘텐츠 제작 도구가 아닌, 언제 어디서든 나의 궁금증을 해결해주는 <strong>나만의 1:1 맞춤형 학습 도우미</strong>로 격상시키는 것이 핵심입니다.</p>
+					</div>
+					<div class="takeaway">목표: "스마트폰을 배운 사람"을 넘어 "AI를 활용해 스스로 지속해서 배우는 학습자" 양성</div>
+				</main>
+			</section>
+
+<!-- SLIDE 009 | Curriculum Step 1 -->
+			<section class="slide" data-layout="numbered_checklist" data-part="Ⅴ. 구체적 개선안 및 커리큘럼" id="slide-009">
+				<header class="slide-header">
+					<div class="number-chip">009</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">1단계: 스마트폰·키오스크 생활 활용 (1~8주차)</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">기존의 기초 과정을 체계화하여, 중장년층이 일상에서 마주하는 디지털 기기 조작의 두려움을 먼저 해소합니다.</p>
+					<div class="numbered-grid">
+						<div class="numbered-item"><span class="step-num">1주</span>
+							<div>
+								<h3>오리엔테이션 및 수준 진단</h3>
+								<p>개별 스마트폰 활용 수준을 파악하고, 일상에서 가장 어려움을 느끼는 디지털 상황을 조사하여 맞춤형 목표를 설정합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">2주</span>
+							<div>
+								<h3>스마트폰 기본 설정 점검</h3>
+								<p>와이파이, 알림, 글자 크기, 앱 접근 권한, 저장공간 관리 등 기초적이지만 가장 빈번하게 겪는 기기 통제 방법을 익힙니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">3주</span>
+							<div>
+								<h3>카카오톡과 기본 소통 기능</h3>
+								<p>단순 메시지 전송을 넘어 채팅방 관리, 사진 및 파일 전송, 위치 공유, 영상통화 등 가족 및 지인과의 소통 역량을 강화합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">4주</span>
+							<div>
+								<h3>검색과 생활정보 찾기</h3>
+								<p>네이버 및 포털 검색을 활용하여 병원 진료 시간, 교통 정보, 지역 복지 정보 등을 스스로 찾기 위한 검색어 작성법을 배웁니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">5주</span>
+							<div>
+								<h3>지도 및 대중교통 앱 활용</h3>
+								<p>네이버 지도, 길 찾기 기능, 코레일 기차표 예매, 고속버스 앱 등 이동과 직결된 교통 앱의 실전 활용법을 익힙니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">6주</span>
+							<div>
+								<h3>키오스크 기초 모의 실습</h3>
+								<p>카페, 패스트푸드, 영화관, 무인민원발급기 등 압박감이 큰 무인화 환경을 앱을 통한 모의 실습으로 반복 훈련합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">7주</span>
+							<div>
+								<h3>키오스크 심화 생활 시나리오</h3>
+								<p>병원 접수 및 수납, 은행 ATM, 카카오택시 호출 등 실제 생활 시나리오를 바탕으로 복합적인 디지털 기기 조작을 수행합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">8주</span>
+							<div>
+								<h3>디지털 안전 기초와 1단계 복습</h3>
+								<p>스미싱 및 보이스피싱의 최신 수법을 이해하고, 악성 앱 설치 예방 등 개인정보 보호 수칙을 배우며 1단계를 총복습합니다.</p>
+							</div>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 010 | Curriculum Step 2 -->
+			<section class="slide" data-layout="numbered_checklist" data-part="Ⅴ. 구체적 개선안 및 커리큘럼" id="slide-010">
+				<header class="slide-header">
+					<div class="number-chip">010</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">2단계: AI 기반 자기주도 디지털 학습 (9~16주차)</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">기초 역량을 바탕으로, AI를 '신기한 기술'이 아닌 일상의 문제를 스스로 묻고 해결하는 '나만의 학습 멘토'로 활용합니다.</p>
+					<div class="numbered-grid">
+						<div class="numbered-item"><span class="step-num">9주</span>
+							<div>
+								<h3>AI와 생성형 AI의 정확한 이해</h3>
+								<p>AI의 개념과 ChatGPT, Gemini 등 대화형 AI가 할 수 있는 일, 그리고 '할 수 없는 일(환각 현상 등 한계)'을 명확히 이해합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">10주</span>
+							<div>
+								<h3>AI에게 '좋은 질문'하는 방법</h3>
+								<p>원하는 답을 얻기 위한 프롬프트 작성법, 추가 질문을 통해 답변을 구체화하고 개선하는 대화의 기술을 실습합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">11주</span>
+							<div>
+								<h3>스마트폰 문제를 AI로 스스로 해결</h3>
+								<p>앱 설치 오류, 설정 변경, 저장공간 부족 등 내가 모르는 기기 조작법을 강사가 아닌 AI에게 묻고 해결하는 방법을 배웁니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">12주</span>
+							<div>
+								<h3>키오스크 및 낯선 상황 예습하기</h3>
+								<p>병원 방문이나 기차 예매 전, AI에게 "키오스크 사용 순서를 처음 하는 사람도 이해하게 설명해줘"라고 질문하여 미리 예습합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">13주</span>
+							<div>
+								<h3>정보의 교차 검증 (크로스체크)</h3>
+								<p>AI가 제공한 건강 정보나 복지 정책 등을 무조건 믿지 않고, 공식 정부 기관이나 병원의 자료와 직접 비교하여 검증하는 훈련을 합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">14주</span>
+							<div>
+								<h3>생애주기 맞춤형 AI 활용 실습</h3>
+								<p>재취업을 위한 이력서 초안 작성, 의사에게 물어볼 증상 리스트 정리, 가족 여행 일정표 작성 등 본인의 실제 고민을 AI로 풉니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">15주</span>
+							<div>
+								<h3>정보 판별 및 디지털 안전 심화</h3>
+								<p>AI가 생성한 가짜 뉴스나 조작된 이미지(딥페이크 등)를 구별하는 법을 익히고, 개인정보를 AI에 입력하지 않도록 보안을 강화합니다.</p>
+							</div>
+						</div>
+						<div class="numbered-item"><span class="step-num">16주</span>
+							<div>
+								<h3>나만의 디지털 생활 매뉴얼 완성</h3>
+								<p>자주 쓰는 앱과 내가 직접 만든 훌륭한 AI 질문(프롬프트)들을 모아 나만의 매뉴얼을 완성하고 발표하며 과정을 마무리합니다.</p>
+							</div>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 011 | Role of AI -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅵ. 세부 개선 전략" id="slide-011">
+				<header class="slide-header">
+					<div class="number-chip">011</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">전략 1: AI를 콘텐츠 제작 도구에서 '학습 도우미'로</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">흥미 위주의 일회성 체험에서 벗어나, 수업이 끝난 후에도 지속적으로 사용할 수 있는 실질적인 문제 해결 도구로 전환합니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">LIMITATION</span>
+							<h3>기존의 AI 체험 중심 교육</h3>
+							<p>현재 북면 등에서 시도되는 AI 교육은 그림을 그리거나 영상, 음악을 생성하는 '콘텐츠 창작'에 비중이 있습니다. 이는 흥미 유발에는 훌륭하지만, 중장년층이 일상으로 돌아갔을 때 이 기술을 다시 꺼내어 쓸 확률은 매우 낮습니다. 결과적으로 "AI로 신기한 것을 해봤다"는 일회성 경험으로 끝날 우려가 있습니다.</p>
+						</div>
+						<div class="accent-card"><span class="badge">INNOVATION</span>
+							<h3>개선된 AI 학습 도우미 활용</h3>
+							<p>AI를 내가 모르는 것을 24시간 언제든 친절하게 대답해주는 '1:1 디지털 멘토'로 격상시킵니다. "카카오톡에서 여러 장의 사진을 묶어서 보내는 법을 단계별로 알려줘", "정부24에서 주민등록등본을 떼는 순서를 알려줘" 와 같은 생활 밀착형 질문 훈련을 반복하여, 수업 종료 후에도 스스로 학습할 수 있는 자생력을 부여합니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 012 | Safety & Literacy -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅵ. 세부 개선 전략" id="slide-012">
+				<header class="slide-header">
+					<div class="number-chip">012</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">전략 2: 피싱 예방을 넘어선 '정보 판별 리터러시' 강화</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">단순한 보이스피싱 예방을 넘어, AI 시대에 쏟아지는 정보의 진위 여부를 스스로 검증하는 비판적 사고를 교육합니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">VULNERABILITY</span>
+							<h3>AI에 대한 맹신과 정보 유출의 위험</h3>
+							<p>디지털 기기에 익숙하지 않은 중장년층은 기계(AI)가 출력한 텍스트를 무비판적으로 진실이라고 믿는 경향이 있습니다. 특히 AI는 그럴듯하게 거짓말을 하는 '환각(Hallucination)' 현상이 존재하기 때문에, 건강, 금융, 법률과 관련된 정보를 AI에만 의존할 경우 치명적인 피해를 입거나 중요한 개인정보를 무심코 입력할 위험이 큽니다.</p>
+						</div>
+						<div class="accent-card"><span class="badge">SOLUTION</span>
+							<h3>다각적인 정보 검증 및 안전망 구축</h3>
+							<p>AI가 준 건강 정보를 보건복지부 공식 자료와 재확인하는 습관을 훈련합니다. 또한, 주민등록번호, 계좌 비밀번호 등은 절대 AI 대화창에 입력하지 않도록 엄격히 교육합니다. 더불어 가족을 사칭하는 정교한 딥페이크 보이스나 출처가 불분명한 가짜 뉴스를 의심하고 교차 검증하는 포괄적인 '디지털 방어력'을 길러줍니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 013 | Life Cycle Customized -->
+			<section class="slide" data-layout="four_card_grid" data-part="Ⅵ. 세부 개선 전략" id="slide-013">
+				<header class="slide-header">
+					<div class="number-chip">013</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">전략 3: 중장년 생애주기 맞춤형 실습 도입</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">스마트폰의 앱을 기계적으로 순회하는 방식이 아니라, 50~64세의 실제 삶의 과제를 해결하는 과정 속에 기술을 녹여냅니다.</p>
+					<div class="card-grid">
+						<div class="card">
+							<h3>[재취업 및 직무 전환]</h3>
+							<p>단순 메모장 타이핑 연습 대신, AI를 활용해 자신의 과거 경력을 입력하고 세련된 재취업용 자기소개서 초안을 작성해보는 실습을 진행합니다. 또한 예상 면접 질문을 AI에게 뽑아달라고 요청하며 실질적인 은퇴 후 대비를 돕습니다.</p>
+						</div>
+						<div class="card">
+							<h3>[건강 관리 및 병원 진료]</h3>
+							<p>단순히 네이버 검색창 여는 법을 가르치지 않습니다. 종합병원 진료 전, 본인의 증상을 명확히 정리하고 "의사에게 꼭 물어봐야 할 질문 리스트"를 AI와 함께 작성하여 실제 진료 시 소통의 질을 높이는 훈련을 합니다.</p>
+						</div>
+						<div class="card">
+							<h3>[금융 생활 및 피싱 방어]</h3>
+							<p>모바일 뱅킹 앱 설치에 그치지 않습니다. 최근 수신한 의심스러운 문자 메시지 내용을 AI에게 분석해달라고 요청하여, 스미싱 위험 요소(URL 클릭 유도, 조급함 유발 등)가 있는지 스스로 점검하는 판단 기준을 익힙니다.</p>
+						</div>
+						<div class="card">
+							<h3>[가족 소통 및 지역사회 참여]</h3>
+							<p>카카오톡 기능 연습을 넘어, 다가오는 명절이나 가족 모임을 위한 초대장 문구를 AI의 도움을 받아 다정하게 작성해봅니다. 또한 천안시 평생학습포털 등 지역 커뮤니티 프로그램에 직접 온라인으로 수강 신청을 해봅니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 014 | Final Proposal -->
+			<section class="slide" data-layout="two_column_analysis" data-part="Ⅶ. 결론 및 최종 제안" id="slide-014">
+				<header class="slide-header">
+					<div class="number-chip">014</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">최종 제안: AI와 함께 배우는 자기주도 디지털 학습 과정</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">기존의 좋은 프로그램들을 무리하게 폐지하지 않고, 유기적으로 연결하여 천안시 평생교육의 새로운 브랜드를 제안합니다.</p>
+					<div class="grid-2">
+						<div class="card"><span class="badge">PROGRAM OVERVIEW</span>
+							<h3>프로그램 운영 개요</h3>
+							<ul>
+								<li><strong>과정명:</strong> AI와 함께 배우는 중장년 자기주도 디지털 학습</li>
+								<li><strong>교육 대상:</strong> 50~64세 천안시민 (기본 조작 가능자 우선)</li>
+								<li><strong>교육 기간:</strong> 총 16주 (기초 활용 8주 + AI 자기주도 8주)</li>
+								<li><strong>운영 장소:</strong> 천안시 평생학습관 및 읍면동 평생학습센터</li>
+								<li><strong>지원 체계:</strong> 실습 시 낙오자가 없도록 대학생 디지털 서포터즈 및 보조 강사를 배치하여 1:1 밀착 지원을 강화합니다.</li>
+							</ul>
+						</div>
+						<div class="accent-card"><span class="badge">OPERATIONAL STRATEGY</span>
+							<h3>현장 정착을 위한 운영 전략</h3>
+							<p>교육 시작 전 철저한 '디지털 수준 진단'을 실시하여 학습자의 눈높이에 맞는 반을 배정합니다. 교육이 종료될 때는 수료증과 함께 본인이 수업 중 직접 작성한 '디지털 생활 매뉴얼'과 'AI 필수 질문집'을 인쇄하여 제공함으로써, 집으로 돌아간 후에도 지속적으로 복습할 수 있는 물리적 환경을 제공합니다.</p>
+						</div>
+					</div>
+				</main>
+			</section>
+
+			<!-- SLIDE 015 | Expected Effects & Conclusion -->
+			<section class="slide" data-layout="hero_text" data-part="Ⅶ. 결론 및 최종 제안" id="slide-015">
+				<header class="slide-header">
+					<div class="number-chip">015</div>
+					<div class="header-rule"></div>
+					<h1 class="slide-title">기대효과 및 결론</h1>
+				</header>
+				<main class="slide-body">
+					<p class="slide-lead">천안시 평생교육은 앞으로 "스마트폰을 잘 쓰는 사람"을 넘어 "스스로 배우는 평생학습자"를 길러내야 합니다.</p>
+					<div class="hero-panel" style="text-align: center;">
+						<p style="font-size: calc(28px * var(--content-scale)); font-weight: 800; color: var(--accent-navy); margin-bottom: 30px;">
+							"본 프로그램의 도입으로 중장년층의 디지털 불안감은 해소되고,<br>정보화 사회에서 스스로를 보호하는 강력한 방어력이 구축될 것입니다."
+						</p>
+						<div style="display: flex; justify-content: center; gap: 30px; text-align: left;">
+							<ul style="font-size: calc(22px * var(--content-scale)); line-height: 1.6; color: var(--text-primary); display: inline-block;">
+								<li>✅ 무인화 기기(키오스크) 및 생활 앱 활용 역량의 획기적 향상</li>
+								<li>✅ AI를 활용해 모르는 것을 언제든 스스로 배우는 자생력 확보</li>
+								<li>✅ 보이스피싱, 스미싱, 가짜뉴스 등 사이버 위험에 대한 비판적 대응력 제고</li>
+								<li>✅ 천안시 평생학습 생태계의 참여 지속성 및 만족도 극대화</li>
+							</ul>
+						</div>
+					</div>
+					<div class="takeaway" style="text-align: center; font-size: calc(28px * var(--content-scale));">경청해 주셔서 감사합니다.</div>
+				</main>
+			</section>
+
+		</div>
+	</div>
+
+	<!-- Navigation & Controls -->
+	<nav aria-label="Slide navigation" class="slide-nav">
+		<button class="nav-btn" id="prevBtn" type="button">이전</button>
+		<span class="page-indicator" id="pageIndicator">1 / 15</span>
+		<input aria-label="Go to slide" class="nav-input" id="pageInput" max="15" min="1" type="number" value="1" />
+		<button class="nav-btn" id="scaleDownBtn" type="button">글자-</button>
+		<button class="nav-btn" id="scaleUpBtn" type="button">글자+</button>
+		<button class="nav-btn" id="printBtn" type="button">PDF 저장(인쇄)</button>
+		<button class="nav-btn" id="nextBtn" type="button">다음</button>
+	</nav>
+
+	<script>
+		const slides = Array.from(document.querySelectorAll('.slide'));
+		const pageIndicator = document.getElementById('pageIndicator');
+		const pageInput = document.getElementById('pageInput');
+		pageInput.max = slides.length;
+		let current = 0;
+		let contentScale = 1.00;
+
+		function getBrowserViewportSize() {
+			const viewport = window.visualViewport;
+			return {
+				width: viewport ? viewport.width : window.innerWidth,
+				height: viewport ? viewport.height : window.innerHeight
+			};
+		}
+
+		function updateFitScale() {
+			const slideW = 1600;
+			const slideH = 900;
+			const { width, height } = getBrowserViewportSize();
+			const nav = document.querySelector('.slide-nav');
+			const navRect = nav ? nav.getBoundingClientRect() : null;
+			const navHeight = navRect ? Math.ceil(navRect.height) : 0;
+			const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+			const isMobile = width <= 980 || (coarsePointer && width <= 1180);
+			const isLandscapeMobile = isMobile && width > height && height < 560;
+			document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+
+			if (isLandscapeMobile) {
+				const landscapePadding = 12;
+				const availableW = Math.max(width - (landscapePadding * 2), 1);
+				const scale = Math.min(availableW / slideW, 1);
+				document.documentElement.style.setProperty('--fit-scale', Math.max(scale, 0.1).toFixed(4));
+				document.documentElement.style.setProperty('--deck-shift-y', '0px');
+				document.body.classList.add('landscape-mobile-fit');
+				document.body.style.overflowY = 'auto';
+				return;
+			}
+
+			const sidePadding = isMobile ? 10 : 8;
+			const topPadding = isMobile ? 8 : 6;
+			const navGap = isMobile ? 8 : 6;
+			const navTop = navRect ? Math.max(navRect.top, 1) : height;
+			const availableW = Math.max(width - (sidePadding * 2), 1);
+			const availableBottom = Math.max(navTop - navGap, 1);
+			const availableH = Math.max(availableBottom - topPadding, 1);
+			const scale = Math.min(availableW / slideW, availableH / slideH, 1);
+			const safeScale = Math.max(scale, 0.1);
+			const fitCenterY = topPadding + (availableH / 2);
+			const shiftY = Math.max((height / 2) - fitCenterY, 0);
+
+			document.documentElement.style.setProperty('--fit-scale', safeScale.toFixed(4));
+			document.documentElement.style.setProperty('--deck-shift-y', `${Math.round(shiftY)}px`);
+			document.body.classList.remove('landscape-mobile-fit');
+			document.body.style.overflowY = 'hidden';
+		}
+
+		function showSlide(index) {
+			current = Math.max(0, Math.min(index, slides.length - 1));
+			slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+			pageIndicator.textContent = `${current + 1} / ${slides.length}`;
+			pageInput.value = current + 1;
+			updateFitScale();
+		}
+
+		document.getElementById('prevBtn').addEventListener('click', () => showSlide(current - 1));
+		document.getElementById('nextBtn').addEventListener('click', () => showSlide(current + 1));
+		pageInput.addEventListener('change', () => showSlide(Number(pageInput.value) - 1));
+		pageInput.addEventListener('keydown', (event) => {
+			if (event.key === 'Enter') showSlide(Number(pageInput.value) - 1);
+		});
+
+		document.addEventListener('keydown', (event) => {
+			const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+			const isTypingTarget = ['input', 'textarea', 'select', 'button'].includes(activeTag) || (document.activeElement && document.activeElement.isContentEditable);
+			if (isTypingTarget) return;
+			if (event.key === 'ArrowRight' || event.key === 'PageDown') showSlide(current + 1);
+			if (event.key === 'ArrowLeft' || event.key === 'PageUp') showSlide(current - 1);
+		});
+
+		document.getElementById('scaleDownBtn').addEventListener('click', () => {
+			contentScale = Math.max(0.82, contentScale - 0.06);
+			document.documentElement.style.setProperty('--content-scale', contentScale.toFixed(2));
+			updateFitScale();
+		});
+		
+		document.getElementById('scaleUpBtn').addEventListener('click', () => {
+			contentScale = Math.min(1.18, contentScale + 0.06);
+			document.documentElement.style.setProperty('--content-scale', contentScale.toFixed(2));
+			updateFitScale();
+		});
+
+		// PDF 인쇄 로직 (버튼 클릭 시 인쇄 창 띄움, CSS @media print에 의해 하단 바는 사라짐)
+		document.getElementById('printBtn').addEventListener('click', () => {
+			// 전체 슬라이드를 강제로 표시하여 PDF에 모두 담기게 하는 꼼수(Print mode 용)
+			window.print();
+		});
+
+		window.addEventListener('resize', updateFitScale);
+		window.addEventListener('orientationchange', () => {
+			updateFitScale();
+			setTimeout(updateFitScale, 120);
+			setTimeout(updateFitScale, 320);
+		});
+
+		document.addEventListener('DOMContentLoaded', () => {
+			showSlide(0);
+			updateFitScale();
+		});
+		
+		window.addEventListener('load', updateFitScale);
+		window.addEventListener('pageshow', updateFitScale);
+		if (window.visualViewport) {
+			window.visualViewport.addEventListener('resize', updateFitScale);
+			window.visualViewport.addEventListener('scroll', updateFitScale);
+		}
+	</script>
+</body>
+</html>
